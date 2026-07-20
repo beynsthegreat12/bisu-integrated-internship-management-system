@@ -8,10 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { toast } from "sonner"
 import {
-  User, Save, Mail, Phone, Building2, GraduationCap, Shield,
-  Calendar, Clock, ChevronRight
+  User, Save, Shield, Calendar, Clock
 } from "lucide-react"
 
 export default function ProfilePage() {
@@ -22,15 +20,10 @@ export default function ProfilePage() {
   const [phoneNum, setPhoneNum] = useState(user?.phoneNum || "")
   const [collegeId, setCollegeId] = useState<string>(String(user?.collegeId || ""))
 
-  const { data: colleges } = trpc.hte.list.useQuery({})
   const updateMut = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
-      toast.success("Profile updated successfully!")
       refresh()
       utils.user.getById.invalidate({ id: user?.id || 0 })
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to update profile")
     },
   })
 
@@ -53,13 +46,11 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#1A1A2E]">My Profile</h1>
         <p className="text-gray-500 mt-1">Manage your account information</p>
       </div>
 
-      {/* Profile Card */}
       <Card className="border-0 shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-[#7B1F3A] to-[#9B2D4A] px-6 py-8 text-white">
           <div className="flex items-center gap-4">
@@ -68,7 +59,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <h2 className="text-xl font-bold">{user?.name || "User"}</h2>
-              <p className="text-white/80 text-sm">{user?.email}</p>
+              <p className="text-white/80 text-sm">{user?.email || ""}</p>
               <Badge className={`mt-1 ${roleColors[user?.role || ""] || ""}`}>
                 {user?.role?.replace("_", " ").toUpperCase()}
               </Badge>
@@ -107,7 +98,6 @@ export default function ProfilePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">None</SelectItem>
-                    {/* We'll use the hte list to get college names as placeholder */}
                     <SelectItem value="1">College of Sciences</SelectItem>
                     <SelectItem value="2">College of Business and Management</SelectItem>
                     <SelectItem value="3">College of Teacher Education</SelectItem>
@@ -131,7 +121,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Account Details */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Account Details</CardTitle>
