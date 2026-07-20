@@ -62,8 +62,11 @@ flowchart TD
     
     subgraph S1 [Daily Time Record]
         C --> C1[Calendar View - Month Selector]
-        C1 --> C2[Log Entry: AM/PM Arrival & Departure]
-        C2 --> C3[Auto-compute: Total Hours, Late, Undertime]
+        C1 --> C2[Time In / Time Out Buttons]
+        C2 --> C2a[Time In: Auto-record AM Arrival]
+        C2 --> C2b[Time Out: Auto-record PM Departure]
+        C2a --> C3[Auto-compute: Total Hours, Late, Undertime]
+        C2b --> C3
         C3 --> C4[Export: PDF / Excel / Print CS Form 48]
     end
     
@@ -100,7 +103,7 @@ flowchart TD
 | Path | Component | Description |
 |------|-----------|-------------|
 | `/student/dashboard` | `StudentDashboard` | Stats, quick actions, pending tasks, recent reports |
-| `/student/dtr` | `DTRPage` | Monthly calendar, time logging, CS Form 48 export |
+| `/student/dtr` | `DTRPage` | Monthly calendar, **Time In/Time Out**, CS Form 48 export |
 | `/student/reports` | `ReportsPage` | CRUD accomplishment reports with file upload |
 | `/student/tasks` | `TasksPage` | Kanban board for assigned tasks |
 | `/student/messages` | `MessagesPage` | Direct messaging with supervisor/coordinator |
@@ -339,7 +342,7 @@ appRouter
 ├── ping              # Health check
 ├── auth              # Login, logout, me
 ├── user              # User CRUD
-├── attendance        # DTR: list, create, update, delete, getToday, getSummary, etc.
+├── attendance        # DTR: list, create, update, delete, getToday, getSummary, timeIn, timeOut
 ├── report            # Accomplishment reports CRUD + review
 ├── task              # Tasks: list, create, update status
 ├── evaluation        # Evaluations: list, create, scores, AI summary
@@ -379,7 +382,7 @@ flowchart TD
 
 | Page | tRPC Queries | tRPC Mutations | Key State |
 |------|-------------|----------------|-----------|
-| `DTRPage` | `attendance.list`, `attendance.getToday`, `attendance.getInternshipProgress`, `attendance.getSupervisorRemarks`, `attendance.coordinatorList`, `attendance.getCoordinatorStats`, `attendance.getStudentAttendance` | `attendance.create`, `attendance.update`, `attendance.delete` | `selMonth`, `dialogOpen`, `editId`, `formData`, `searchTerm`, `filterStatus` |
+| `DTRPage` | `attendance.list`, `attendance.getToday`, `attendance.getInternshipProgress`, `attendance.getSupervisorRemarks`, `attendance.coordinatorList`, `attendance.getCoordinatorStats`, `attendance.getStudentAttendance` | `attendance.create`, `attendance.update`, `attendance.delete`, `attendance.timeIn`, `attendance.timeOut` | `selMonth`, `dialogOpen`, `editId`, `formData`, `searchTerm`, `filterStatus` |
 | `ReportsPage` | `report.list`, `report.studentReports` | `report.create`, `report.updateStatus`, `report.addRemarks` | `selMonth`, `dialogOpen`, `reviewOpen`, `searchTerm`, `filterStatus`, `filterStudent`, `dateRange` |
 | `TasksPage` | `task.list` | `task.create`, `task.update` | `open`, `formData` |
 | `EvaluationsPage` | `evaluation.list`, `evaluation.getCriteria` | `evaluation.create`, `evaluation.submitScore` | Tab selection, rating state, dialog open |
@@ -401,6 +404,15 @@ Total Daily Hours = AM Hours + PM Hours
 Late Minutes = max(0, AM Arrival - 08:00)
 Monthly Total = Sum of all daily hours
 Attendance Rate = (Present Days / Total Weekdays) × 100
+```
+
+### Time In / Time Out Flow:
+```
+Time In  → Auto-sets AM Arrival to current time (HH:MM)
+Time Out → Auto-sets PM Departure to current time (HH:MM)
+           If no AM Arrival yet, also sets AM Arrival
+           Auto-computes undertime
+           Status auto-set to "present" or "late"
 ```
 
 ### Evaluation Scoring:

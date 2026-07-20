@@ -359,6 +359,119 @@ export const attendanceRouter = createRouter({
       return { completedHours, requiredHours: REQUIRED_HOURS, remainingHours: remaining, progress };
     }),
 
+  timeIn: studentQuery.mutation(async ({ ctx }) => {
+      const db = getDb();
+      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+      // Check if already timed in today
+      const existing = await db.query.attendance.findFirst({
+        where: and(
+          eq(attendance.studentId, ctx.user.id),
+          sql`${attendance.date} = ${today}`
+        ),
+      });
+
+      if (existing) {
+        // Update AM arrival if not set
+        if (!existing.amArrival) {
+          await db.update(attendance)
+            .set({ amArrival: timeStr })
+            .where(eq(attendance.id, existing.id));
+          return { success: true, action: "time_in_updated", time: timeStr };
+        }
+        return { success: true, action: "already_timed_in", time: existing.amArrival };
+      }
+
+      // Create new attendance record
+      await db.insert(attendance).values({
+        studentId: ctx.user.id,
+        assignmentId: 1,
+        date: new Date(today),
+        amArrival: timeStr,
+        status: "present",
+      });
+
+      return { success: true, action: "time_in_created", time: timeStr };
+    }),
+
+  timeOut: studentQuery.mutation(async ({ ctx }) => {
+      const db = getDb();
+      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+      // Find today's record
+      const existing = await db.query.attendance.findFirst({
+        where: and(
+          eq(attendance.studentId, ctx.user.id),
+          sql`${attendance.date} = ${today}`
+        ),
+      });
+
+      if (!existing) {
+        // No record yet - create with both time in and time out
+        await db.insert(attendance).values({
+          studentId: ctx.user.id,
+          assignmentId: 1,
+          date: new Date(today),
+          amArrival: timeStr,
+          pmDeparture: timeStr,
+          status: "present",
+        });
+        return { success: true, action: "created_with_timeout", time: timeStr };
+      }
+
+      // Determine which slot to fill
+      const updates: Record<string, string> = {};
+
+      if (!existing.amArrival) {
+        updates.amArrival = timeStr;
+      }
+      if (!existing.amDeparture && existing.amArrival) {
+        updates.amDeparture = timeStr;
+      } else if (!existing.pmArrival && existing.amDeparture) {
+        updates.pmArrival = timeStr;
+      } else if (!existing.pmDeparture) {
+        updates.pmDeparture = timeStr;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        // Calculate undertime if we have complete AM/PM pairs
+        let undertimeHours = 0;
+        let undertimeMinutes = 0;
+
+        const amArrival = updates.amArrival || existing.amArrival;
+        const amDeparture = updates.amDeparture || existing.amDeparture;
+        const pmArrival = updates.pmArrival || existing.pmArrival;
+        const pmDeparture = updates.pmDeparture || existing.pmDeparture;
+
+        if (amArrival && amDeparture) {
+          const amIn = new Date(`2000-01-01T${amArrival}`);
+          const amOut = new Date(`2000-01-01T${amDeparture}`);
+          const amDiff = (amOut.getTime() - amIn.getTime()) / 1000 / 60;
+          if (amDiff < 240) undertimeMinutes += 240 - amDiff;
+        }
+
+        if (pmArrival && pmDeparture) {
+          const pmIn = new Date(`2000-01-01T${pmArrival}`);
+          const pmOut = new Date(`2000-01-01T${pmDeparture}`);
+          const pmDiff = (pmOut.getTime() - pmIn.getTime()) / 1000 / 60;
+          if (pmDiff < 240) undertimeMinutes += 240 - pmDiff;
+        }
+
+        undertimeHours = Math.floor(undertimeMinutes / 60);
+        undertimeMinutes = undertimeMinutes % 60;
+
+        await db.update(attendance)
+          .set({ ...updates, undertimeHours, undertimeMinutes })
+          .where(eq(attendance.id, existing.id));
+      }
+
+      return { success: true, action: "timed_out", time: timeStr };
+    }),
+
   getSummary: authedQuery
     .input(
       z.object({

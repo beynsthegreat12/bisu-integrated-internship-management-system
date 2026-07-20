@@ -143,6 +143,8 @@ export default function DTRPage() {
   const createMut = trpc.attendance.create.useMutation({ onSuccess: () => { refetch(); closeDialog() } })
   const updateMut = trpc.attendance.update.useMutation({ onSuccess: () => { refetch(); closeDialog() } })
   const deleteMut = trpc.attendance.delete.useMutation({ onSuccess: () => refetch() })
+  const timeInMut = trpc.attendance.timeIn.useMutation({ onSuccess: () => { refetch(); todayData.refetch() } })
+  const timeOutMut = trpc.attendance.timeOut.useMutation({ onSuccess: () => { refetch(); todayData.refetch() } })
 
   // ── Record Map ──
   const recordMap = useMemo(() => {
@@ -572,13 +574,40 @@ export default function DTRPage() {
 
     if (!todayRec) {
       return (
-        <div className="flex items-center gap-3 py-6 text-gray-400">
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-            <Sunrise className="w-5 h-5" />
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 py-4 text-gray-400">
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+              <Sunrise className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">No attendance logged for today.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Tap "Time In" to start your attendance.</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">No attendance logged for today.</p>
-            <p className="text-xs text-gray-400 mt-0.5">Click "Log DTR" to record your time.</p>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => timeInMut.mutate()}
+              disabled={timeInMut.isPending}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-12 text-base"
+            >
+              {timeInMut.isPending ? (
+                <><Clock className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
+              ) : (
+                <><Clock className="w-5 h-5 mr-2" /> ⏰ Time In</>
+              )}
+            </Button>
+            <Button
+              onClick={() => timeOutMut.mutate()}
+              disabled={timeOutMut.isPending}
+              variant="outline"
+              className="flex-1 h-12 text-base"
+            >
+              {timeOutMut.isPending ? (
+                <><Clock4 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
+              ) : (
+                <><Clock4 className="w-5 h-5 mr-2" /> 🚪 Time Out</>
+              )}
+            </Button>
           </div>
         </div>
       )
