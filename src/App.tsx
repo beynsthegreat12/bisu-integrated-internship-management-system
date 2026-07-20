@@ -28,6 +28,8 @@ const HTEsPage = lazy(() => import('./pages/features/HTEsPage'))
 const AssignmentsPage = lazy(() => import('./pages/features/AssignmentsPage'))
 const PullOutMonitoring = lazy(() => import('./pages/features/PullOutMonitoring'))
 const RequirementsPage = lazy(() => import('./pages/features/RequirementsPage'))
+const ProfilePage = lazy(() => import('./pages/features/ProfilePage'))
+const UsersPage = lazy(() => import('./pages/features/UsersPage'))
 
 function LoadingFallback() {
   return (
@@ -87,6 +89,7 @@ export default function App() {
               <Route path="tasks" element={<TasksPage />} />
               <Route path="messages" element={<MessagesPage />} />
               <Route path="requirements" element={<RequirementsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>
@@ -107,6 +110,7 @@ export default function App() {
               <Route path="htes" element={<HTEsPage />} />
               <Route path="pullouts" element={<PullOutMonitoring />} />
               <Route path="requirements" element={<RequirementsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>
@@ -121,6 +125,7 @@ export default function App() {
               <Route path="tasks" element={<TasksPage />} />
               <Route path="evaluations" element={<EvaluationsPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>
@@ -137,6 +142,8 @@ export default function App() {
               <Route path="evaluations" element={<EvaluationsPage />} />
               <Route path="visits" element={<SiteVisitsPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="users" element={<UsersPage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>

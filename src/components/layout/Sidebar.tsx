@@ -15,6 +15,8 @@ import {
   ChevronRight,
   GraduationCap,
   AlertTriangle,
+  User,
+  Settings,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -25,6 +27,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Accomplishment Reports', icon: FileText, path: '/student/reports' },
     { label: 'Tasks', icon: CheckSquare, path: '/student/tasks' },
     { label: 'Requirements', icon: ClipboardList, path: '/student/requirements' },
+    { label: 'Profile', icon: User, path: '/student/profile' },
   ],
   coordinator: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/coordinator/dashboard' },
@@ -37,11 +40,13 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'HTE Partners', icon: Building2, path: '/coordinator/htes' },
     { label: 'Pull-Out Monitor', icon: AlertTriangle, path: '/coordinator/pullouts' },
     { label: 'Requirements', icon: ClipboardList, path: '/coordinator/requirements' },
+    { label: 'Profile', icon: User, path: '/coordinator/profile' },
   ],
   supervisor: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/supervisor/dashboard' },
     { label: 'Tasks', icon: CheckSquare, path: '/supervisor/tasks' },
     { label: 'Evaluations', icon: ClipboardList, path: '/supervisor/evaluations' },
+    { label: 'Profile', icon: User, path: '/supervisor/profile' },
   ],
   sipp_coordinator: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/sipp/dashboard' },
@@ -49,6 +54,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'HTE Partners', icon: Building2, path: '/sipp/htes' },
     { label: 'Evaluations', icon: ClipboardList, path: '/sipp/evaluations' },
     { label: 'Site Visits', icon: Calendar, path: '/sipp/visits' },
+    { label: 'Profile', icon: User, path: '/sipp/profile' },
   ],
   admin: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/coordinator/dashboard' },
@@ -59,6 +65,8 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Evaluations', icon: ClipboardList, path: '/coordinator/evaluations' },
     { label: 'Site Visits', icon: Calendar, path: '/coordinator/visits' },
     { label: 'HTE Partners', icon: Building2, path: '/coordinator/htes' },
+    { label: 'Users', icon: Settings, path: '/coordinator/users' },
+    { label: 'Profile', icon: User, path: '/coordinator/profile' },
   ],
 }
 
