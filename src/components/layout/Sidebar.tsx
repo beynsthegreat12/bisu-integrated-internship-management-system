@@ -24,6 +24,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Daily Time Record', icon: Clock, path: '/student/dtr' },
     { label: 'Accomplishment Reports', icon: FileText, path: '/student/reports' },
     { label: 'Tasks', icon: CheckSquare, path: '/student/tasks' },
+    { label: 'Requirements', icon: ClipboardList, path: '/student/requirements' },
   ],
   coordinator: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/coordinator/dashboard' },
@@ -35,6 +36,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Site Visits', icon: Calendar, path: '/coordinator/visits' },
     { label: 'HTE Partners', icon: Building2, path: '/coordinator/htes' },
     { label: 'Pull-Out Monitor', icon: AlertTriangle, path: '/coordinator/pullouts' },
+    { label: 'Requirements', icon: ClipboardList, path: '/coordinator/requirements' },
   ],
   supervisor: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/supervisor/dashboard' },

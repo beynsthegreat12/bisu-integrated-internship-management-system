@@ -8,6 +8,8 @@ import { messageRouter } from "./message-router";
 import { siteVisitRouter } from "./sitevisit-router";
 import { hteRouter } from "./hte-router";
 import { assignmentRouter } from "./assignment-router";
+import { uploadRouter } from "./upload-router";
+import { requirementRouter } from "./requirement-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -22,6 +24,8 @@ export const appRouter = createRouter({
   siteVisit: siteVisitRouter,
   hte: hteRouter,
   assignment: assignmentRouter,
+  upload: uploadRouter,
+  requirement: requirementRouter,
 });
 
 export type AppRouter = typeof appRouter;
