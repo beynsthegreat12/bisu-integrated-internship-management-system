@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
-import { findUserByEmail } from "./queries/users";
+import { findUserByEmail, upsertUser } from "./queries/users";
 import { signSessionToken } from "./kimi/session";
 import { env } from "./lib/env";
 
@@ -77,5 +77,45 @@ export const authRouter = createRouter({
       // Return user without password
       const { password: _, ...safeUser } = user;
       return { user: safeUser };
+    }),
+
+  register: publicQuery
+    .input((val: unknown) => {
+      if (typeof val !== "object" || val === null) throw new Error("Invalid input");
+      const input = val as Record<string, unknown>;
+      if (typeof input.name !== "string" || typeof input.email !== "string" || typeof input.password !== "string") {
+        throw new Error("Name, email, and password are required");
+      }
+      return {
+        name: input.name.trim(),
+        email: input.email.trim(),
+        password: input.password,
+        role: (input.role as string) || "student",
+      };
+    })
+    .mutation(async ({ input }) => {
+      // Check if email already exists
+      const existing = await findUserByEmail(input.email);
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "An account with this email already exists",
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(input.password, 10);
+
+      const unionId = `user-${input.email.replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
+
+      await upsertUser({
+        unionId,
+        name: input.name,
+        email: input.email,
+        password: hashedPassword,
+        role: input.role as any,
+        lastSignInAt: new Date(),
+      });
+
+      return { success: true, message: "Account created successfully" };
     }),
 });

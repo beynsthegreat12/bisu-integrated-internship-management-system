@@ -12,6 +12,7 @@ import LandingPage from './pages/LandingPage'
 import NotFound from './pages/NotFound'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import Register from './pages/Register'
 
 // Dashboard pages (lazy loaded)
 const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard'))
@@ -78,6 +79,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<LandingPage />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<RoleBasedRedirect />} />
