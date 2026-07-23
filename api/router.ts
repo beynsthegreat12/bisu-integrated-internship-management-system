@@ -13,6 +13,7 @@ import { requirementRouter } from "./requirement-router";
 import { passwordRouter } from "./password-router";
 import { notificationRouter } from "./notification-router";
 import { geminiRouter } from "./gemini-router";
+import { searchRouter } from "./search-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -32,6 +33,7 @@ export const appRouter = createRouter({
   password: passwordRouter,
   notification: notificationRouter,
   gemini: geminiRouter,
+  search: searchRouter,
 });
 
 export type AppRouter = typeof appRouter;

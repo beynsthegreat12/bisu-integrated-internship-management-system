@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router'
-import { Bell, Search, CheckCheck, Info, AlertCircle, CheckCircle2, XCircle, ArrowRight, Moon, Sun, Monitor } from 'lucide-react'
+import { Link, useNavigate } from 'react-router'
+import { Bell, Search, CheckCheck, Info, AlertCircle, CheckCircle2, XCircle, ArrowRight, Moon, Sun, Monitor, User, Building2, FileText, CheckSquare, ClipboardList, X, Loader2 } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useTheme } from '@/providers/theme-provider'
 
@@ -18,9 +18,18 @@ const typeColors: Record<string, string> = {
   error: 'text-red-500 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
 }
 
+const searchIcons: Record<string, any> = {
+  User, Building2, FileText, CheckSquare, ClipboardList,
+}
+
 export default function Header({ user }: { user: any }) {
+  const navigate = useNavigate()
   const [notifOpen, setNotifOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const searchRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const themeRef = useRef<HTMLDivElement>(null)
   const { theme, setTheme } = useTheme()
@@ -34,10 +43,16 @@ export default function Header({ user }: { user: any }) {
     onSuccess: () => { refetchCount(); refetchList() },
   })
 
+  const searchResults = trpc.search.global.useQuery(
+    { q: searchQuery, limit: 8 },
+    { enabled: searchQuery.length >= 2 }
+  )
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false)
       if (themeRef.current && !themeRef.current.contains(e.target as Node)) setThemeOpen(false)
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) { setSearchOpen(false) }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -50,14 +65,66 @@ export default function Header({ user }: { user: any }) {
 
   return (
     <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 transition-colors">
-      <div className="flex items-center flex-1">
+      <div className="flex items-center flex-1" ref={searchRef}>
         <div className="relative max-w-md w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B1F3A]/20 focus:border-[#7B1F3A] transition-colors"
+            placeholder="Search users, HTEs, reports, tasks..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true) }}
+            onFocus={() => setSearchOpen(true)}
+            className="w-full pl-10 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B1F3A]/20 focus:border-[#7B1F3A] transition-colors"
           />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(""); setSearchOpen(false); searchInputRef.current?.focus() }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Search Results Dropdown */}
+          {searchOpen && searchQuery.length >= 2 && (
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
+              {searchResults.isLoading ? (
+                <div className="p-4 text-center text-gray-400">
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                </div>
+              ) : searchResults.data && searchResults.data.length > 0 ? (
+                searchResults.data.map((result, i) => {
+                  const Icon = searchIcons[result.icon] || Search
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        navigate(result.link)
+                        setSearchOpen(false)
+                        setSearchQuery("")
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 last:border-0 text-left transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[#1A1A2E] dark:text-gray-100 truncate">{result.label}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{result.description}</p>
+                      </div>
+                      <span className="text-[10px] text-gray-300 dark:text-gray-600 uppercase">{result.type}</span>
+                    </button>
+                  )
+                })
+              ) : (
+                <div className="p-4 text-center text-gray-400 text-sm">
+                  <Search className="w-5 h-5 mx-auto mb-1" />
+                  No results found
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
