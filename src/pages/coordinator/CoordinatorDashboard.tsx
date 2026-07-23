@@ -7,8 +7,9 @@ import { Link } from 'react-router'
 import {
   Users, Building2, ClipboardList, Calendar, AlertCircle,
   ArrowRight, Clock, UserCheck, XCircle, FileText, CheckSquare,
-  TrendingUp, GraduationCap, Plus, Eye
+  TrendingUp, GraduationCap, Plus, BarChart as BarChartIcon
 } from 'lucide-react'
+import { StatusPieChart, MiniDonut, SimpleBarChart, StackedBarChart, COLORS } from '@/components/charts/DashboardCharts'
 
 export default function CoordinatorDashboard() {
   const { data: userStats } = trpc.user.stats.useQuery()
@@ -20,7 +21,6 @@ export default function CoordinatorDashboard() {
   const { data: tasks } = trpc.task.list.useQuery({})
   const { data: pullOuts } = trpc.assignment.pullOutCount.useQuery()
 
-  // Compute stats
   const activeStudents = assignments?.filter(a => a.status === 'active').length || 0
   const pendingReports = reports?.length || 0
   const completedVisits = visits?.filter(v => v.status === 'completed').length || 0
@@ -30,18 +30,47 @@ export default function CoordinatorDashboard() {
   const totalHtes = htes?.length || 0
   const pullOutCount = pullOuts?.count || 0
 
-  // Report stats
   const reportStats = useMemo(() => {
     if (!allReports) return { total: 0, approved: 0, rejected: 0, pending: 0, rate: 0 }
     const total = allReports.length
     const approved = allReports.filter(r => r.status === 'approved').length
     const rejected = allReports.filter(r => r.status === 'rejected').length
     const pending = allReports.filter(r => r.status === 'pending').length
-    return {
-      total, approved, rejected, pending,
-      rate: total > 0 ? Math.round((approved / total) * 100) : 0
-    }
+    return { total, approved, rejected, pending, rate: total > 0 ? Math.round((approved / total) * 100) : 0 }
   }, [allReports])
+
+  // Pie chart data: Report status distribution
+  const reportPieData = [
+    { name: 'Approved', value: reportStats.approved },
+    { name: 'Pending', value: reportStats.pending },
+    { name: 'Rejected', value: reportStats.rejected },
+  ].filter(d => d.value > 0)
+
+  // Bar chart data: Assignment status distribution
+  const assignmentStatusData = useMemo(() => {
+    if (!assignments) return []
+    const active = assignments.filter(a => a.status === 'active').length
+    const completed = assignments.filter(a => a.status === 'completed').length
+    const pullOut = assignments.filter(a => a.status === 'pull_out').length
+    const cancelled = assignments.filter(a => a.status === 'cancelled').length
+
+    return [
+      { label: 'Active', value: active, color: COLORS.emerald },
+      { label: 'Completed', value: completed, color: COLORS.blue },
+      { label: 'Pull-Out', value: pullOut, color: COLORS.red },
+      { label: 'Cancelled', value: cancelled, color: COLORS.gray },
+    ]
+  }, [assignments])
+
+  // Monthly data simulation (for line chart)
+  const monthlyData = [
+    { name: 'Jun', reports: 5, visits: 2 },
+    { name: 'Jul', reports: 8, visits: 3 },
+    { name: 'Aug', reports: 12, visits: 5 },
+    { name: 'Sep', reports: 7, visits: 4 },
+    { name: 'Oct', reports: 10, visits: 6 },
+    { name: 'Nov', reports: 15, visits: 8 },
+  ]
 
   const quickActions = [
     { label: 'Assign Student', path: '/coordinator/students', icon: Plus, color: 'bg-[#7B1F3A] hover:bg-[#7B1F3A]/90' },
@@ -52,18 +81,16 @@ export default function CoordinatorDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome */}
+      {/* Welcome + Date */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#1A1A2E]">Coordinator Dashboard</h1>
           <p className="text-gray-500 mt-1">Monitor and manage internship activities.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
-            <Clock className="w-4 h-4 inline mr-1" />
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </span>
-        </div>
+        <span className="text-sm text-gray-500">
+          <Clock className="w-4 h-4 inline mr-1" />
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+        </span>
       </div>
 
       {/* Quick Actions */}
@@ -78,7 +105,7 @@ export default function CoordinatorDashboard() {
         ))}
       </div>
 
-      {/* Main Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           { label: 'Active Interns', value: String(activeStudents), icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -104,156 +131,104 @@ export default function CoordinatorDashboard() {
         ))}
       </div>
 
-      {/* Second Row: Detailed Stats */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Reports Overview */}
+        {/* Report Status Pie Chart */}
         <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="w-4 h-4 text-amber-500" />
-              Reports Overview
+              <BarChartIcon className="w-4 h-4 text-amber-500" />
+              Report Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">Total Submitted</span>
-                <span className="text-sm font-bold text-[#1A1A2E]">{reportStats.total}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-emerald-50 rounded-lg">
-                <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Approved
-                </span>
-                <span className="text-sm font-bold text-emerald-600">{reportStats.approved}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg">
-                <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending
-                </span>
-                <span className="text-sm font-bold text-amber-600">{reportStats.pending}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-red-50 rounded-lg">
-                <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                  <XCircle className="w-3.5 h-3.5 text-red-600" /> Rejected
-                </span>
-                <span className="text-sm font-bold text-red-600">{reportStats.rejected}</span>
-              </div>
-              <div className="pt-2 border-t">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Approval Rate</span>
-                  <span className="font-bold text-[#1A1A2E]">{reportStats.rate}%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#7B1F3A] to-[#D4AF37] rounded-full transition-all"
-                    style={{ width: `${reportStats.rate}%` }}
-                  />
-                </div>
-              </div>
-              <Link to="/coordinator/reports" className="flex items-center text-xs text-[#7B1F3A] hover:underline mt-2">
-                Manage Reports <ArrowRight className="w-3 h-3 ml-1" />
-              </Link>
-            </div>
+          <CardContent className="pt-0">
+            {reportStats.total === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No reports yet</p>
+            ) : (
+              <StatusPieChart data={reportPieData} />
+            )}
           </CardContent>
         </Card>
 
-        {/* Site Visits Overview */}
+        {/* Assignment Status Distribution */}
         <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-500" />
-              Site Visits
+              <BarChartIcon className="w-4 h-4 text-blue-500" />
+              Internship Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-2.5 bg-blue-50 rounded-lg">
-                <span className="text-sm text-gray-600">Scheduled</span>
-                <span className="text-sm font-bold text-blue-600">{scheduledVisits}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-emerald-50 rounded-lg">
-                <span className="text-sm text-gray-600">Completed</span>
-                <span className="text-sm font-bold text-emerald-600">{completedVisits}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">Total</span>
-                <span className="text-sm font-bold text-[#1A1A2E]">{visits?.length || 0}</span>
-              </div>
-              <div className="pt-2">
-                {visits && visits.filter(v => v.status === 'scheduled').length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-500 font-medium">Upcoming:</p>
-                    {visits.filter(v => v.status === 'scheduled').slice(0, 3).map(v => (
-                      <div key={v.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
-                        <span>{v.student?.name || 'Unknown'}</span>
-                        <span className="text-gray-400">{v.visitDate ? new Date(v.visitDate).toLocaleDateString() : ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 text-center py-2">No upcoming visits</p>
-                )}
-              </div>
-              <Link to="/coordinator/visits" className="flex items-center text-xs text-[#7B1F3A] hover:underline mt-1">
-                Schedule a Visit <ArrowRight className="w-3 h-3 ml-1" />
-              </Link>
-            </div>
+          <CardContent className="pt-0">
+            {assignments?.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No assignments yet</p>
+            ) : (
+              <StackedBarChart data={assignmentStatusData} />
+            )}
           </CardContent>
         </Card>
 
-        {/* HTE & Students Overview */}
+        {/* Mini Donuts */}
         <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-green-500" />
-              HTE Partners
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              Key Rates
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-2.5 bg-blue-50 rounded-lg">
-                <span className="text-sm text-gray-600">Total Students</span>
-                <span className="text-sm font-bold text-[#1A1A2E]">{userStats?.students || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-green-50 rounded-lg">
-                <span className="text-sm text-gray-600">HTE Partners</span>
-                <span className="text-sm font-bold text-[#1A1A2E]">{totalHtes}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-amber-50 rounded-lg">
-                <span className="text-sm text-gray-600">Active Interns</span>
-                <span className="text-sm font-bold text-amber-600">{activeStudents}</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-red-50 rounded-lg">
-                <span className="text-sm text-gray-600">Pull-Outs</span>
-                <span className="text-sm font-bold text-red-600">{pullOutCount}</span>
-              </div>
-              <div className="pt-2 border-t">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Placement Rate</span>
-                  <span className="font-bold text-[#1A1A2E]">
-                    {userStats?.students && userStats?.students > 0
-                      ? Math.round((activeStudents / userStats.students) * 100)
-                      : 0}%
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all"
-                    style={{ width: `${userStats?.students && userStats?.students > 0 ? Math.round((activeStudents / userStats.students) * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-              <Link to="/coordinator/htes" className="flex items-center text-xs text-[#7B1F3A] hover:underline mt-1">
-                Manage HTEs <ArrowRight className="w-3 h-3 ml-1" />
-              </Link>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 gap-2">
+              <MiniDonut
+                value={reportStats.approved}
+                max={reportStats.total}
+                label="Approval Rate"
+                color={COLORS.emerald}
+              />
+              <MiniDonut
+                value={completedAssignments}
+                max={assignments?.length || 0}
+                label="Completion"
+                color={COLORS.primary}
+              />
+              <MiniDonut
+                value={activeStudents}
+                max={userStats?.students || 0}
+                label="Placement"
+                color={COLORS.blue}
+              />
+              <MiniDonut
+                value={completedVisits}
+                max={visits?.length || 0}
+                label="Visit Rate"
+                color={COLORS.purple}
+              />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activity */}
+      {/* Monthly Trend Chart */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BarChartIcon className="w-4 h-4 text-purple-500" />
+            Monthly Activity (Sample Data)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <SimpleBarChart
+            data={monthlyData}
+            dataKey="name"
+            bars={[
+              { key: 'reports', color: COLORS.amber, name: 'Reports' },
+              { key: 'visits', color: COLORS.blue, name: 'Site Visits' },
+            ]}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Bottom Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Reports */}
+        {/* Pending Reports */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -287,7 +262,7 @@ export default function CoordinatorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Upcoming Site Visits */}
+        {/* Upcoming Visits */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
