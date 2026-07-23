@@ -194,3 +194,15 @@ export const messages = mysqlTable("messages", {
 });
 
 export type Message = typeof messages.$inferSelect;
+
+// Password Reset Tokens
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
+  userId: bigint("user_id", { mode: "number", unsigned: true }).notNull().references(() => users.id),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

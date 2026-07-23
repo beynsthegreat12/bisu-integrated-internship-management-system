@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, Link } from "react-router"
 import { useAuth } from "@/hooks/useAuth"
 import { trpc } from "@/providers/trpc"
 import { Card, CardContent } from "@/components/ui/card"
@@ -126,13 +126,12 @@ export default function Login() {
                   <Label htmlFor="password" className="text-sm font-medium text-slate-700">
                     Password
                   </Label>
-                  <button
-                    type="button"
+                  <Link
+                    to="/forgot-password"
                     className="text-xs text-[#7B1E3A] hover:text-[#9B2D4A] font-medium transition-colors"
-                    onClick={() => alert("Password reset functionality coming soon.")}
                   >
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <Input

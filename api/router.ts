@@ -10,6 +10,7 @@ import { hteRouter } from "./hte-router";
 import { assignmentRouter } from "./assignment-router";
 import { uploadRouter } from "./upload-router";
 import { requirementRouter } from "./requirement-router";
+import { passwordRouter } from "./password-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -26,6 +27,7 @@ export const appRouter = createRouter({
   assignment: assignmentRouter,
   upload: uploadRouter,
   requirement: requirementRouter,
+  password: passwordRouter,
 });
 
 export type AppRouter = typeof appRouter;
