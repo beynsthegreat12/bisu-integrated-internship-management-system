@@ -206,3 +206,17 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 });
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// Notifications
+export const notifications = mysqlTable("notifications", {
+  id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
+  userId: bigint("user_id", { mode: "number", unsigned: true }).notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  type: mysqlEnum("type", ["info", "success", "warning", "error"]).default("info").notNull(),
+  link: varchar("link", { length: 255 }),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;

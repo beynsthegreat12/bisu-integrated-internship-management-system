@@ -11,6 +11,7 @@ import { assignmentRouter } from "./assignment-router";
 import { uploadRouter } from "./upload-router";
 import { requirementRouter } from "./requirement-router";
 import { passwordRouter } from "./password-router";
+import { notificationRouter } from "./notification-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -28,6 +29,7 @@ export const appRouter = createRouter({
   upload: uploadRouter,
   requirement: requirementRouter,
   password: passwordRouter,
+  notification: notificationRouter,
 });
 
 export type AppRouter = typeof appRouter;
