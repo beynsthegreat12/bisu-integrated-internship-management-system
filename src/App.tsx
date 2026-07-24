@@ -33,6 +33,7 @@ const PullOutMonitoring = lazy(() => import('./pages/features/PullOutMonitoring'
 const RequirementsPage = lazy(() => import('./pages/features/RequirementsPage'))
 const ProfilePage = lazy(() => import('./pages/features/ProfilePage'))
 const UsersPage = lazy(() => import('./pages/features/UsersPage'))
+const SettingsPage = lazy(() => import('./pages/features/SettingsPage'))
 
 function LoadingFallback() {
   return (
@@ -150,6 +151,7 @@ export default function App() {
               <Route path="messages" element={<MessagesPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>

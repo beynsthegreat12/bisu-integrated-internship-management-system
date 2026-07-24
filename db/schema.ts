@@ -220,3 +220,14 @@ export const notifications = mysqlTable("notifications", {
 });
 
 export type Notification = typeof notifications.$inferSelect;
+
+// System Settings
+export const systemSettings = mysqlTable("system_settings", {
+  id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  value: text("value"),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
