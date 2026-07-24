@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -58,165 +59,6 @@ function getRatingInfo(score: number) {
   if (score >= 80) return { equiv: "2.0", desc: "Good", color: "text-amber-600" }
   if (score >= 75) return { equiv: "3.0", desc: "Fair", color: "text-orange-600" }
   return { equiv: "5.0", desc: "Failure", color: "text-red-600" }
-}
-
-// ── Official BISU Evaluation Form HTML for Print ──
-function generateEvalFormHTML(data: {
-  studentName: string; hteName: string; hteAddress: string; department: string;
-  startDate: string; endDate: string; scores: any[]; comments: string;
-  jobPerfAvg: number; lifeSkillAvg: number; overall: number; rating: any;
-  evaluatorName: string; coordinatorName: string; collegeName: string;
-}): string {
-  const { studentName, hteName, hteAddress, department, startDate, endDate, scores, comments, jobPerfAvg, lifeSkillAvg, overall, rating, evaluatorName, coordinatorName, collegeName } = data
-
-  const jobPerfScores = scores.filter(s => JOB_PERFORMANCE_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-  const lifeSkillScores = scores.filter(s => LIFE_SKILLS_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-
-  let jobPerfRows = ""
-  for (const cat of JOB_PERFORMANCE_CRITERIA) {
-    const catScores = jobPerfScores.filter(s => cat.items.includes(s.criteriaName))
-    if (catScores.length === 0) continue
-    jobPerfRows += `<tr class="cat"><td colspan="3"><strong>${cat.category}</strong></td></tr>`
-    for (const item of cat.items) {
-      const s = catScores.find(sc => sc.criteriaName === item)
-      jobPerfRows += `<tr><td></td><td>${item}</td><td class="r">${s ? s.rating : ''}</td></tr>`
-    }
-  }
-
-  let lifeSkillRows = ""
-  for (const cat of LIFE_SKILLS_CRITERIA) {
-    const catScores = lifeSkillScores.filter(s => cat.items.includes(s.criteriaName))
-    if (catScores.length === 0) continue
-    lifeSkillRows += `<tr class="cat"><td colspan="3"><strong>${cat.category}</strong></td></tr>`
-    for (const item of cat.items) {
-      const s = catScores.find(sc => sc.criteriaName === item)
-      lifeSkillRows += `<tr><td></td><td>${item}</td><td class="r">${s ? s.rating : ''}</td></tr>`
-    }
-  }
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-  @page { size: A4 portrait; margin: 10mm 14mm; }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Times New Roman',Times,serif; font-size:9pt; color:#000; line-height:1.3; }
-  .fc { max-width:185mm; margin:0 auto; }
-  .hdr { text-align:center; margin-bottom:6pt; position:relative; }
-  .hdr .logo { position:absolute; left:0; top:0; width:60px; height:60px; }
-  .hdr .logo img { width:60px; height:60px; object-fit:contain; }
-  .hdr .univ { font-size:11pt; font-weight:bold; }
-  .hdr .campus { font-size:9pt; }
-  .hdr .dept { font-size:8pt; font-style:italic; }
-  .hdr .title { font-size:13pt; font-weight:bold; margin:4pt 0; }
-  .hdr .fno { font-size:7pt; }
-  .info { margin:4pt 0; font-size:8.5pt; }
-  .info table { width:100%; border-collapse:collapse; }
-  .info td { padding:1pt 3pt; vertical-align:top; }
-  .info .lb { font-weight:bold; width:120px; }
-  .scale { margin:4pt 0; font-size:7.5pt; }
-  .scale table { width:100%; border-collapse:collapse; }
-  .scale th { background:#ddd; font-weight:bold; padding:2pt; border:1px solid #000; font-size:7pt; }
-  .scale td { padding:1.5pt 3pt; border:1px solid #000; text-align:center; font-size:7pt; }
-  table.eval { width:100%; border-collapse:collapse; margin:4pt 0; page-break-inside:avoid; }
-  table.eval th { background:#ddd; font-weight:bold; padding:2.5pt 3pt; border:1px solid #000; font-size:7.5pt; text-align:center; }
-  table.eval td { padding:2pt 3pt; border:1px solid #000; font-size:8pt; vertical-align:top; }
-  table.eval td.r { text-align:center; width:50px; }
-  table.eval tr.cat td { background:#f0f0f0; font-weight:bold; font-size:8pt; }
-  .wt { font-size:7.5pt; font-style:italic; margin:2pt 0; }
-  .sig { margin-top:8pt; page-break-inside:avoid; }
-  .sig table { width:100%; }
-  .sig td { text-align:center; width:50%; padding:4pt; }
-  .sig .line { border-top:1px solid #000; width:70%; margin:0 auto; padding-top:2pt; }
-  .sig .name { font-weight:bold; font-size:9pt; }
-  .sig .lbl { font-size:7.5pt; }
-  .overall { margin:4pt 0; font-size:9pt; }
-  .overall table { width:100%; border-collapse:collapse; }
-  .overall td { padding:2pt 4pt; border:1px solid #000; }
-  .overall .b { font-weight:bold; }
-  .fn { text-align:center; margin-top:6pt; font-size:6pt; color:#666; }
-  .comments { margin:4pt 0; font-size:8pt; }
-  .comments .box { border:1px solid #000; padding:4pt; min-height:40px; margin-top:2pt; }
-</style>
-</head>
-<body>
-<div class="fc">
-  <div class="hdr">
-    <div class="logo"><img src="data/DTR.jpg" alt="BISU Logo" onerror="this.style.display='none'" /></div>
-    <div class="univ">Republic of the Philippines</div>
-    <div class="univ">BOHOL ISLAND STATE UNIVERSITY</div>
-    <div class="campus">Candijay Campus</div>
-    <div class="dept">College of Sciences</div>
-    <div class="fno">F-AQA-INS-014</div>
-    <div class="title">GENERAL INTERNSHIP EVALUATION FORM</div>
-    <div class="fno">(Revised 2025)</div>
-  </div>
-
-  <div class="info">
-    <table>
-      <tr><td class="lb">Name of Intern:</td><td>${studentName}</td><td class="lb">Period:</td><td>${startDate} to ${endDate}</td></tr>
-      <tr><td class="lb">Name of HTE:</td><td>${hteName}</td><td class="lb">Department:</td><td>${department}</td></tr>
-      <tr><td class="lb">HTE Address:</td><td colspan="3">${hteAddress}</td></tr>
-    </table>
-  </div>
-
-  <div class="scale">
-    <p><strong>Rating Scale:</strong></p>
-    <table>
-      <tr><th>Rating</th><th>Equivalent</th><th>Description</th><th>Rating</th><th>Equivalent</th><th>Description</th></tr>
-      <tr><td>1.0</td><td>99-100</td><td>Excellent</td><td>2.0-2.4</td><td>81-85</td><td>Good</td></tr>
-      <tr><td>1.1-1.2</td><td>95-98</td><td>Excellent</td><td>2.5-2.9</td><td>76-80</td><td>Fair</td></tr>
-      <tr><td>1.3-1.5</td><td>90-94</td><td>Very Good</td><td>3.0</td><td>75</td><td>Fair</td></tr>
-      <tr><td>1.6-1.9</td><td>86-89</td><td>Good</td><td>5.0</td><td>Below 75</td><td>Failure</td></tr>
-    </table>
-  </div>
-
-  <p class="wt"><strong>Direction:</strong> Kindly assess the intern based on the scale below. Rate each item from 1 to 100.</p>
-
-  <p><strong>A. Job Performance (80%)</strong></p>
-  <table class="eval">
-    <tr><th style="width:5%"></th><th>Criteria</th><th style="width:50px">Rating</th></tr>
-    ${jobPerfRows}
-    <tr><td colspan="2" style="text-align:right;font-weight:bold;">Job Performance Average:</td><td class="r">${jobPerfAvg.toFixed(2)}</td></tr>
-  </table>
-
-  <p><strong>B. Life Skills (20%)</strong></p>
-  <table class="eval">
-    <tr><th style="width:5%"></th><th>Criteria</th><th style="width:50px">Rating</th></tr>
-    ${lifeSkillRows}
-    <tr><td colspan="2" style="text-align:right;font-weight:bold;">Life Skills Average:</td><td class="r">${lifeSkillAvg.toFixed(2)}</td></tr>
-  </table>
-
-  <div class="overall">
-    <table>
-      <tr><td style="width:50%"><strong>Overall Rating:</strong> ${overall.toFixed(2)}</td><td style="width:25%"><strong>Equivalent:</strong> ${rating.equiv}</td><td style="width:25%"><strong>Description:</strong> ${rating.desc}</td></tr>
-    </table>
-  </div>
-
-  ${comments ? `<div class="comments"><strong>Comments/Recommendations:</strong><div class="box">${comments}</div></div>` : ''}
-
-  <div class="sig">
-    <table>
-      <tr>
-        <td>
-          <div class="line"></div>
-          <div class="name">${evaluatorName}</div>
-          <div class="lbl">Signature over Printed Name of Immediate Supervisor/Mentor</div>
-        </td>
-        <td>
-          <div class="line"></div>
-          <div class="name">${coordinatorName}</div>
-          <div class="lbl">SIPP Coordinator/Internship Teacher</div>
-        </td>
-      </tr>
-    </table>
-  </div>
-
-  <div class="fn">BISU Integrated Internship Management System — Candijay Campus</div>
-</div>
-</body>
-</html>`
 }
 
 export default function EvaluationsPage() {
@@ -286,226 +128,239 @@ export default function EvaluationsPage() {
 
   // ── Official Print ──
   function handleOfficialPrint(ev: any) {
-    const studentName = ev.student?.name || "_______________________"
-    const hteName = ev.hteName || "_______________________"
-    const hteAddress = "_______________________"
-    const department = "Computer Science"
-    const startDate = "_________________"
-    const endDate = "_________________"
+    const name = ev.student?.name || "_______________________"
+    const hte = ev.hteName || "_______________________"
     const scores = ev.scores || []
     const comments = ev.comments?.replace(/\[COORDINATOR_[^\]]+\]/g, "").trim() || ""
 
-    const jobPerfScores = scores.filter((s: any) => JOB_PERFORMANCE_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-    const lifeSkillScores = scores.filter((s: any) => LIFE_SKILLS_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-    const jobAvg = jobPerfScores.length > 0 ? jobPerfScores.reduce((a: number, s: any) => a + s.rating, 0) / jobPerfScores.length : 0
-    const lifeAvg = lifeSkillScores.length > 0 ? lifeSkillScores.reduce((a: number, s: any) => a + s.rating, 0) / lifeSkillScores.length : 0
-    const overall = (jobAvg * 0.8) + (lifeAvg * 0.2)
-    const rating = getRatingInfo(Math.round(overall))
-
-    const html = generateEvalFormHTML({
-      studentName, hteName, hteAddress, department, startDate, endDate,
-      scores, comments, jobPerfAvg: jobAvg, lifeSkillAvg: lifeAvg,
-      overall, rating,
-      evaluatorName: ev.evaluator?.name || "_______________________",
-      coordinatorName: "ROGER E. AMOLATO, LPT",
-      collegeName: "College of Sciences",
-    })
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; }
+  .hdr { text-align:center; margin-bottom:10pt; }
+  .hdr .univ { font-size:12pt; font-weight:bold; }
+  .hdr .campus { font-size:9pt; }
+  .hdr .title { font-size:14pt; font-weight:bold; margin:4pt 0; }
+  .hdr .fno { font-size:7pt; }
+  .info { margin:6pt 0; font-size:9pt; }
+  .info td { padding:2pt 6pt; }
+  table { width:100%; border-collapse:collapse; margin:6pt 0; }
+  th, td { border:1px solid #000; padding:3pt 5pt; text-align:center; font-size:9pt; }
+  th { background:#ddd; font-weight:bold; }
+  .l { text-align:left; }
+  .sig { margin-top:15pt; }
+  .sig td { border:none; text-align:center; width:50%; padding-top:20pt; }
+  .sig .line { border-top:1px solid #000; width:60%; margin:0 auto; padding-top:3pt; }
+  .fn { text-align:center; margin-top:8pt; font-size:7pt; color:#666; }
+</style></head>
+<body>
+<div class="hdr">
+  <div class="univ">Republic of the Philippines<br/>BOHOL ISLAND STATE UNIVERSITY</div>
+  <div class="campus">Candijay Campus &mdash; College of Sciences</div>
+  <div class="fno">F-AQA-INS-014</div>
+  <div class="title">GENERAL INTERNSHIP EVALUATION FORM</div>
+  <div class="fno">(Revised 2025)</div>
+</div>
+<table class="info">
+  <tr><td><b>Name of Intern:</b> ${name}</td><td><b>Name of HTE:</b> ${hte}</td></tr>
+  <tr><td><b>Overall Grade:</b> ${ev.overallGrade || "N/A"}</td><td><b>Rating:</b> ${ev.overallGrade ? getRatingInfo(Number(ev.overallGrade)).desc + " (" + getRatingInfo(Number(ev.overallGrade)).equiv + ")" : "Pending"}</td></tr>
+</table>
+<p><b>Evaluation Scores:</b></p>
+<table>
+  <tr><th>#</th><th>Criteria</th><th>Rating (1-100)</th><th>Equivalent</th></tr>
+  ${scores.map((s: any, i: number) => `<tr><td>${i+1}</td><td class="l">${s.criteriaName}</td><td>${s.rating}</td><td>${getRatingInfo(s.rating).desc}</td></tr>`).join("")}
+</table>
+${comments ? `<p><b>Comments/Recommendations:</b><br/>${comments}</p>` : ""}
+<div class="sig">
+  <table><tr>
+    <td><div class="line">${ev.evaluator?.name || "_______________________"}</div><small>Immediate Supervisor/Mentor</small></td>
+    <td><div class="line">ROGER E. AMOLATO, LPT</div><small>SIPP Coordinator/Internship Teacher</small></td>
+  </tr></table>
+</div>
+<div class="fn">BISU Integrated Internship Management System &mdash; Candijay Campus</div>
+</body></html>`
 
     const pw = window.open("", "_blank")
     if (!pw) { alert("Please allow pop-ups."); return }
     pw.document.write(html)
     pw.document.close()
     pw.focus()
-    setTimeout(() => { pw.print() }, 500)
+    setTimeout(() => pw.print(), 500)
   }
 
-  // ── PDF Export (Official Form) ──
-  async function exportOfficialPDF(ev: any) {
+  // ── PDF Export ──
+  async function exportPDF() {
     const { default: jsPDF } = await import("jspdf")
+    const { default: autoTable } = await import("jspdf-autotable")
     const doc = new jsPDF("p", "mm", "a4")
     const pw = doc.internal.pageSize.getWidth()
     const l = 16
 
-    const studentName = ev.student?.name || "N/A"
-    const hteName = ev.hteName || "N/A"
-    const scores = ev.scores || []
-    const comments = ev.comments?.replace(/\[COORDINATOR_[^\]]+\]/g, "").trim() || ""
+    const name = user?.name || "Student"
+    const monthLabel = `${MONTHS[month - 1]} ${year}`
 
-    const jobPerfScores = scores.filter((s: any) => JOB_PERFORMANCE_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-    const lifeSkillScores = scores.filter((s: any) => LIFE_SKILLS_CRITERIA.flatMap(g => g.items).includes(s.criteriaName))
-    const jobAvg = jobPerfScores.length > 0 ? jobPerfScores.reduce((a: number, s: any) => a + s.rating, 0) / jobPerfScores.length : 0
-    const lifeAvg = lifeSkillScores.length > 0 ? lifeSkillScores.reduce((a: number, s: any) => a + s.rating, 0) / lifeSkillScores.length : 0
-    const overall = (jobAvg * 0.8) + (lifeAvg * 0.2)
-    const rating = getRatingInfo(Math.round(overall))
+    doc.setFont("times", "bold"); doc.setFontSize(16)
+    doc.text("BISU Internship Evaluation", pw / 2, 20, { align: "center" })
+    doc.setFontSize(11)
+    doc.text("GENERAL INTERNSHIP EVALUATION FORM", pw / 2, 28, { align: "center" })
+    doc.line(l, 32, pw - l, 32)
 
-    // Header
-    doc.setFont("times", "bold")
-    doc.setFontSize(10)
-    doc.text("Republic of the Philippines", pw / 2, 14, { align: "center" })
-    doc.setFontSize(12)
-    doc.text("BOHOL ISLAND STATE UNIVERSITY", pw / 2, 20, { align: "center" })
-    doc.setFontSize(9)
-    doc.text("Candijay Campus", pw / 2, 25, { align: "center" })
-    doc.setFontSize(8)
-    doc.text("College of Sciences", pw / 2, 29, { align: "center" })
-    doc.setFontSize(7)
-    doc.text("F-AQA-INS-014", pw / 2, 33, { align: "center" })
-    doc.setFontSize(13)
-    doc.text("GENERAL INTERNSHIP EVALUATION FORM", pw / 2, 39, { align: "center" })
-    doc.setFontSize(7)
-    doc.text("(Revised 2025)", pw / 2, 43, { align: "center" })
+    doc.setFont("times", "normal"); doc.setFontSize(10)
+    doc.text(`Name: ${name}`, l, 40)
+    doc.text(`Date: ${monthLabel}`, pw - l, 40, { align: "right" })
 
-    // Info
-    doc.setFont("times", "normal")
-    doc.setFontSize(9)
-    doc.text(`Name of Intern: ${studentName}`, l, 50)
-    doc.text(`Name of HTE: ${hteName}`, l, 56)
-    doc.text(`HTE Address: _______________________`, l, 62)
-    doc.text(`Department: Computer Science`, l, 68)
-    doc.text(`Period: _________________ to _________________`, l, 74)
+    const evalData = (isStudent ? myEvals : isCoordinator ? allEvals : evaluations) || []
+    if (evalData.length > 0) {
+      const ev = evalData[0]
+      const body = (ev.scores || []).map((s: any, i: number) => [String(i + 1), s.criteriaName, String(s.rating), getRatingInfo(s.rating).desc])
 
-    // Scale
-    doc.setFontSize(8)
-    doc.text("Rating Scale:", l, 82)
-    const { default: autoTable } = await import("jspdf-autotable")
-    autoTable(doc, {
-      startY: 85,
-      head: [["Rating", "Equivalent", "Description", "Rating", "Equivalent", "Description"]],
-      body: [
-        ["1.0", "99-100", "Excellent", "2.0-2.4", "81-85", "Good"],
-        ["1.1-1.2", "95-98", "Excellent", "2.5-2.9", "76-80", "Fair"],
-        ["1.3-1.5", "90-94", "Very Good", "3.0", "75", "Fair"],
-        ["1.6-1.9", "86-89", "Good", "5.0", "Below 75", "Failure"],
-      ],
-      headStyles: { halign: "center", fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: "bold", fontSize: 7 },
-      bodyStyles: { fontSize: 7, halign: "center" },
-      margin: { left: l, right: l },
-    })
+      autoTable(doc, {
+        startY: 48,
+        head: [["#", "Criteria", "Rating (1-100)", "Equivalent"]],
+        headStyles: { halign: "center", fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: "bold", fontSize: 8 },
+        body, bodyStyles: { fontSize: 8 },
+        margin: { left: l, right: l },
+      })
 
-    const scaleEnd = (doc as any).lastAutoTable.finalY || 100
-
-    // Job Performance
-    doc.setFontSize(8)
-    doc.text("A. Job Performance (80%)", l, scaleEnd + 8)
-    const jpBody = jobPerfScores.map((s: any, i: number) => [String(i + 1), s.criteriaName, String(s.rating)])
-    jpBody.push(["", "Job Performance Average:", jobAvg.toFixed(2)])
-
-    autoTable(doc, {
-      startY: scaleEnd + 10,
-      head: [["#", "Criteria", "Rating"]],
-      body: jpBody,
-      headStyles: { halign: "center", fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: "bold", fontSize: 7 },
-      bodyStyles: { fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 120 }, 2: { cellWidth: 30, halign: "center" } },
-      margin: { left: l, right: l },
-    })
-
-    const jpEnd = (doc as any).lastAutoTable.finalY || scaleEnd + 20
-
-    // Life Skills
-    doc.setFontSize(8)
-    doc.text("B. Life Skills (20%)", l, jpEnd + 8)
-    const lsBody = lifeSkillScores.map((s: any, i: number) => [String(i + 1), s.criteriaName, String(s.rating)])
-    lsBody.push(["", "Life Skills Average:", lifeAvg.toFixed(2)])
-
-    autoTable(doc, {
-      startY: jpEnd + 10,
-      head: [["#", "Criteria", "Rating"]],
-      body: lsBody,
-      headStyles: { halign: "center", fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: "bold", fontSize: 7 },
-      bodyStyles: { fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 120 }, 2: { cellWidth: 30, halign: "center" } },
-      margin: { left: l, right: l },
-    })
-
-    const lsEnd = (doc as any).lastAutoTable.finalY || jpEnd + 20
-
-    // Overall
-    doc.setFontSize(9)
-    doc.setFont("times", "bold")
-    doc.text(`Overall Rating: ${overall.toFixed(2)}     Equivalent: ${rating.equiv}     Description: ${rating.desc}`, l, lsEnd + 10)
-
-    // Comments
-    if (comments) {
-      doc.setFont("times", "normal")
-      doc.setFontSize(8)
-      doc.text("Comments/Recommendations:", l, lsEnd + 18)
-      const commentLines = doc.splitTextToSize(comments, pw - l * 2)
-      doc.text(commentLines, l, lsEnd + 24)
+      const fy = (doc as any).lastAutoTable.finalY || 100
+      doc.text(`Overall Grade: ${ev.overallGrade || "N/A"}`, l, fy + 14)
+      if (ev.comments) {
+        doc.text("Comments:", l, fy + 22)
+        doc.setFontSize(9)
+        doc.text(ev.comments.substring(0, 200), l + 4, fy + 28)
+      }
     }
 
-    // Signatures
-    const sigY = Math.max(lsEnd + 40, 240)
-    doc.setFont("times", "normal")
-    doc.setFontSize(9)
-    doc.line(l, sigY, l + 70, sigY)
-    doc.setFont("times", "bold")
-    doc.text(ev.evaluator?.name || "_______________________", l + 35, sigY + 6, { align: "center" })
-    doc.setFont("times", "normal")
-    doc.setFontSize(7)
-    doc.text("Signature over Printed Name of", l + 35, sigY + 11, { align: "center" })
-    doc.text("Immediate Supervisor/Mentor", l + 35, sigY + 15, { align: "center" })
-
-    doc.setFont("times", "normal")
-    doc.setFontSize(9)
-    doc.line(pw / 2 + 10, sigY, pw / 2 + 80, sigY)
-    doc.setFont("times", "bold")
-    doc.text("ROGER E. AMOLATO, LPT", pw / 2 + 45, sigY + 6, { align: "center" })
-    doc.setFont("times", "normal")
-    doc.setFontSize(7)
-    doc.text("SIPP Coordinator/Internship Teacher", pw / 2 + 45, sigY + 11, { align: "center" })
-
-    doc.setFontSize(6)
-    doc.text("BISU Integrated Internship Management System — Candijay Campus", pw / 2, 285, { align: "center" })
-
-    doc.save(`Evaluation_Form_${studentName.replace(/\s/g, "_")}.pdf`)
+    doc.save(`Evaluation_${monthLabel.replace(/\s/g, "_")}.pdf`)
   }
+
+  async function exportExcel() {
+    const XLSX = await import("xlsx")
+    const data = (isCoordinator ? allEvals : evaluations || []).map((e: any) => ({
+      Student: e.student?.name || "N/A",
+      Company: e.hteName || "N/A",
+      "Overall Grade": e.overallGrade || "Pending",
+      Comments: e.comments?.substring(0, 100) || "",
+      Date: e.createdAt ? new Date(e.createdAt).toLocaleDateString() : "",
+    }))
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(data)
+    XLSX.utils.book_append_sheet(wb, ws, "Evaluations")
+    ws["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 40 }, { wch: 15 }]
+    XLSX.writeFile(wb, `Evaluations_${selMonth}.xlsx`)
+  }
+
+  function handlePrint() {
+    const pw = window.open("", "_blank")
+    if (!pw) { alert("Please allow pop-ups."); return }
+    pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+      @page { size: A4; margin: 15mm; }
+      body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; }
+      .header { text-align: center; margin-bottom: 15pt; }
+      .header h1 { font-size: 16pt; margin-bottom: 2pt; }
+      .header h2 { font-size: 12pt; }
+      table { width: 100%; border-collapse: collapse; margin: 10pt 0; }
+      th, td { border: 1px solid #000; padding: 4pt 6pt; text-align: center; font-size: 9pt; }
+      th { background: #ddd; font-weight: bold; }
+      .info { margin-bottom: 8pt; }
+    </style></head><body>
+    <div class="header"><h1>BISU Internship Evaluation</h1><h2>GENERAL INTERNSHIP EVALUATION FORM</h2></div>
+    <p class="info"><strong>Name:</strong> ${user?.name || "N/A"} &nbsp;&nbsp;&nbsp; <strong>Date:</strong> ${MONTHS[month - 1]} ${year}</p>
+    <table><thead><tr><th>#</th><th>Criteria</th><th>Rating</th><th>Equivalent</th></tr></thead><tbody>
+    ${(myEvals != null && myEvals[0] != null && myEvals[0].scores != null ? myEvals[0].scores : []).map((s: any, i: number) =>
+      `<tr><td>${i + 1}</td><td style="text-align:left">${s.criteriaName}</td><td>${s.rating}</td><td>${getRatingInfo(s.rating).desc}</td></tr>`
+    ).join("")}
+    </tbody></table>
+    <p><strong>Overall Grade:</strong> ${(myEvals != null && myEvals[0]?.overallGrade) || "N/A"}</p>
+    ${(myEvals != null && myEvals[0]?.comments) ? `<p><strong>Comments:</strong><br>${myEvals[0].comments}</p>` : ""}
+    </body></html>`)
+    pw.document.close(); pw.focus()
+    setTimeout(() => pw.print(), 500)
+  }
+
+  const activeEvals = isStudent ? myEvals : isCoordinator ? allEvals : evaluations
 
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E] dark:text-gray-100">Evaluations</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">General Internship Evaluation Form (F-AQA-INS-014)</p>
+          <h1 className="text-2xl font-bold text-[#1A1A2E]">Evaluations</h1>
+          <p className="text-gray-500 mt-1">
+            {isStudent ? "View your internship evaluation results" :
+             isSupervisor ? "Evaluate intern performance using BISU form" :
+             "Review and manage intern evaluations"}
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <TooltipProvider>
+            {(isStudent || isCoordinator) && <>
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" onClick={exportPDF}><FileText className="w-4 h-4 mr-1.5" /> PDF</Button></TooltipTrigger><TooltipContent>Export Evaluation PDF</TooltipContent></Tooltip>
+              {isCoordinator && <Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 mr-1.5" /> Excel</Button></TooltipTrigger><TooltipContent>Export to Excel</TooltipContent></Tooltip>}
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 mr-1.5" /> Print</Button></TooltipTrigger><TooltipContent>Print Evaluation</TooltipContent></Tooltip>
+            </>}
+          </TooltipProvider>
+
           {isSupervisor && (
             <Dialog open={evalOpen} onOpenChange={setEvalOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#7B1F3A] hover:bg-[#7B1F3A]/90"><Plus className="w-4 h-4 mr-1.5" /> New Evaluation</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-3xl max-h-[90vh]">
-                <ScrollArea className="max-h-[80vh] pr-4">
-                  <DialogHeader><DialogTitle>General Internship Evaluation Form</DialogTitle></DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <Label>Select Student</Label>
-                      <Select value={String(selectedStudentId || "")} onValueChange={v => setSelectedStudentId(Number(v))}>
-                        <SelectTrigger><SelectValue placeholder="Choose student..." /></SelectTrigger>
-                        <SelectContent>
-                          {students?.map((s: any) => (
-                            <SelectItem key={s.id} value={String(s.id)}>{s.name} — {s.company || "No HTE"}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <DialogHeader><DialogTitle>General Internship Evaluation Form</DialogTitle></DialogHeader>
+                <ScrollArea className="max-h-[75vh] pr-4">
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Select Student */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Student <span className="text-red-500">*</span></Label>
+                        <Select value={String(selectedStudentId || "")} onValueChange={v => setSelectedStudentId(Number(v))}>
+                          <SelectTrigger><SelectValue placeholder="Select student..." /></SelectTrigger>
+                          <SelectContent>
+                            {(students || []).map((s: any) => (
+                              <SelectItem key={s.id} value={String(s.id)}>{s.name} - {s.company || "No company"}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Month</Label>
+                        <Input type="month" value={selMonth} readOnly className="bg-gray-50" />
+                      </div>
                     </div>
 
+                    {/* Tabs: Job Performance / Life Skills */}
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                      <TabsList className="grid grid-cols-2">
-                        <TabsTrigger value="job_performance">Job Performance (80%)</TabsTrigger>
-                        <TabsTrigger value="life_skills">Life Skills (20%)</TabsTrigger>
+                      <TabsList className="w-full">
+                        <TabsTrigger value="job_performance" className="flex-1">Job Performance (80%)</TabsTrigger>
+                        <TabsTrigger value="life_skills" className="flex-1">Life Skills (20%)</TabsTrigger>
                       </TabsList>
 
-                      <TabsContent value="job_performance" className="space-y-3">
+                      <TabsContent value="job_performance" className="space-y-4 mt-4">
                         {JOB_PERFORMANCE_CRITERIA.map(group => (
                           <div key={group.category}>
-                            <p className="text-sm font-semibold text-[#7B1F3A] dark:text-[#D4AF37] mb-2">{group.category}</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {group.items.map(item => (
-                                <div key={item} className="flex items-center gap-2">
-                                  <span className="text-xs flex-1">{item}</span>
-                                  <Input type="number" min={0} max={100} value={scores[item] || ""} onChange={e => setScores({...scores, [item]: Number(e.target.value)})} className="w-20 h-8 text-xs" placeholder="1-100" />
+                            <h4 className="text-sm font-semibold text-[#7B1F3A] mb-2">{group.category}</h4>
+                            <div className="space-y-2">
+                              {group.items.map(criteria => (
+                                <div key={criteria} className="flex items-center gap-3">
+                                  <Label className="flex-1 text-sm">{criteria}</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={100}
+                                    value={scores[criteria] || ""}
+                                    onChange={e => setScores({...scores, [criteria]: Number(e.target.value) || 0})}
+                                    className="w-20 text-center"
+                                    placeholder="1-100"
+                                  />
+                                  {scores[criteria] > 0 && (
+                                    <span className={`text-xs font-medium w-16 text-center ${getRatingInfo(scores[criteria]).color}`}>
+                                      {getRatingInfo(scores[criteria]).equiv}
+                                    </span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -513,15 +368,28 @@ export default function EvaluationsPage() {
                         ))}
                       </TabsContent>
 
-                      <TabsContent value="life_skills" className="space-y-3">
+                      <TabsContent value="life_skills" className="space-y-4 mt-4">
                         {LIFE_SKILLS_CRITERIA.map(group => (
                           <div key={group.category}>
-                            <p className="text-sm font-semibold text-[#7B1F3A] dark:text-[#D4AF37] mb-2">{group.category}</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {group.items.map(item => (
-                                <div key={item} className="flex items-center gap-2">
-                                  <span className="text-xs flex-1">{item}</span>
-                                  <Input type="number" min={0} max={100} value={scores[item] || ""} onChange={e => setScores({...scores, [item]: Number(e.target.value)})} className="w-20 h-8 text-xs" placeholder="1-100" />
+                            <h4 className="text-sm font-semibold text-[#7B1F3A] mb-2">{group.category}</h4>
+                            <div className="space-y-2">
+                              {group.items.map(criteria => (
+                                <div key={criteria} className="flex items-center gap-3">
+                                  <Label className="flex-1 text-sm">{criteria}</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={100}
+                                    value={scores[criteria] || ""}
+                                    onChange={e => setScores({...scores, [criteria]: Number(e.target.value) || 0})}
+                                    className="w-20 text-center"
+                                    placeholder="1-100"
+                                  />
+                                  {scores[criteria] > 0 && (
+                                    <span className={`text-xs font-medium w-16 text-center ${getRatingInfo(scores[criteria]).color}`}>
+                                      {getRatingInfo(scores[criteria]).equiv}
+                                    </span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -530,19 +398,36 @@ export default function EvaluationsPage() {
                       </TabsContent>
                     </Tabs>
 
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-                        <div><p className="text-gray-500">Rated Items</p><p className="font-bold text-[#1A1A2E] dark:text-gray-100">{computed.totalRated}</p></div>
-                        <div><p className="text-gray-500">Job Perf Avg</p><p className="font-bold text-[#1A1A2E] dark:text-gray-100">{computed.jobAvg || "—"}</p></div>
-                        <div><p className="text-gray-500">Life Skills Avg</p><p className="font-bold text-[#1A1A2E] dark:text-gray-100">{computed.lifeAvg || "—"}</p></div>
-                        <div><p className="text-gray-500">Overall</p><p className="font-bold text-[#7B1F3A] dark:text-[#D4AF37]">{computed.overall || "—"}</p></div>
+                    {/* Auto-Computed Results */}
+                    {computed.totalRated > 0 && (
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 className="text-sm font-semibold text-[#1A1A2E] mb-3">Auto-Computed Results</h4>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-[10px] text-gray-500 uppercase">Job Perf. (80%)</p>
+                            <p className="text-lg font-bold text-blue-600">{computed.jobAvg.toFixed(1)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 uppercase">Life Skills (20%)</p>
+                            <p className="text-lg font-bold text-emerald-600">{computed.lifeAvg.toFixed(1)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 uppercase">Overall</p>
+                            <p className="text-lg font-bold text-[#1A1A2E]">{computed.overall.toFixed(1)}</p>
+                            <p className={`text-xs font-medium ${computed.color}`}>{computed.equiv} - {computed.desc}</p>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    {/* Comments */}
+                    <div>
+                      <Label>Comments & Recommendations</Label>
+                      <Textarea value={comments} onChange={e => setComments(e.target.value)} rows={4} placeholder="Provide detailed feedback, observations, and recommendations..." required />
                     </div>
 
-                    <div><Label>Comments / Recommendations</Label><Textarea value={comments} onChange={e => setComments(e.target.value)} rows={3} /></div>
-
-                    <Button type="submit" className="w-full bg-[#7B1F3A] hover:bg-[#7B1F3A]/90" disabled={!selectedStudentId || computed.totalRated === 0 || createMut.isPending}>
-                      {createMut.isPending ? "Saving..." : `Submit Evaluation (Overall: ${computed.overall || "—"})`}
+                    <Button type="submit" className="w-full bg-[#7B1F3A] hover:bg-[#7B1F3A]/90" disabled={createMut.isPending || !selectedStudentId}>
+                      {createMut.isPending ? "Submitting..." : "Submit Evaluation"}
                     </Button>
                   </form>
                 </ScrollArea>
@@ -556,56 +441,128 @@ export default function EvaluationsPage() {
       {isCoordinator && stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Total", value: String(stats.total), color: "bg-gray-100 text-gray-600" },
-            { label: "Completed", value: String(stats.completed), color: "bg-emerald-100 text-emerald-600" },
-            { label: "Pending", value: String(stats.pending), color: "bg-amber-100 text-amber-600" },
-            { label: "Avg Score", value: String(stats.avgScore), color: "bg-blue-100 text-blue-600" },
+            { label: "Total Evaluations", value: String(stats.total), icon: ClipboardList, color: "text-blue-600", bg: "bg-blue-100" },
+            { label: "Completed", value: String(stats.completed), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
+            { label: "Pending", value: String(stats.pending), icon: Clock4, color: "text-yellow-600", bg: "bg-yellow-100" },
+            { label: "Avg Score", value: String(stats.avgScore), icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-100" },
           ].map(s => (
-            <Card key={s.label} className="border-0 shadow-sm">
+            <Card key={s.label} className="border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">{s.label}</p>
-                <p className="text-xl font-bold text-[#1A1A2E] dark:text-gray-100 mt-1">{s.value}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{s.label}</p>
+                    <p className={`text-lg font-bold mt-0.5 ${
+                      s.label === "Completed" ? "text-emerald-600" : s.label === "Pending" ? "text-yellow-600" : "text-[#1A1A2E]"
+                    }`}>{s.value}</p>
+                  </div>
+                  <div className={`w-9 h-9 rounded-lg ${s.bg} ${s.color} flex items-center justify-center`}>
+                    <s.icon className="w-4 h-4" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
+      {/* ── Student Summary ── */}
+      {isStudent && myEvals && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {myEvals.length > 0 ? (
+            <>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-white">
+                <CardContent className="p-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Status</p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    {myEvals.filter((e: any) => e.overallGrade).length > 0 ? "Evaluated" : "Pending"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-white">
+                <CardContent className="p-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Overall Grade</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {myEvals[0]?.overallGrade || "N/A"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-violet-50 to-white">
+                <CardContent className="p-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Rating</p>
+                  <p className="text-base font-bold text-violet-600">
+                    {myEvals[0]?.overallGrade ? getRatingInfo(Number(myEvals[0].overallGrade)).desc : "Pending"}
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="border-0 shadow-sm col-span-3">
+              <CardContent className="p-6 text-center text-gray-400">
+                <ClipboardList className="w-8 h-8 mx-auto mb-2" />
+                <p>No evaluation records yet.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* ── Filters ── */}
-      {isCoordinator && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search by student name..." className="pl-9" />
+      {(isCoordinator || isSupervisor) && (
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div className="flex flex-1 items-center gap-3 flex-wrap">
+            <Calendar className="w-5 h-5 text-gray-500" />
+            <Input type="month" value={selMonth} onChange={e => setSelMonth(e.target.value)} className="w-40" />
+            {isCoordinator && (
+              <>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Input placeholder="Search student..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-48 pl-8 text-sm" />
+                  {searchTerm && <button onClick={() => setSearchTerm("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>}
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-36"><Filter className="w-3.5 h-3.5 mr-1" /><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="All Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
+          <span className="text-sm text-gray-500">{activeEvals?.length || 0} evaluation{(activeEvals?.length || 0) !== 1 ? "s" : ""}</span>
         </div>
       )}
 
       {/* ── Evaluations List ── */}
-      <div className="grid gap-3">
-        {(isCoordinator ? allEvals : isStudent ? myEvals : evaluations)?.map((ev: any) => (
-          <Card key={ev.id} className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedEval(ev); setViewOpen(true) }}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <Star className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-[#1A1A2E] dark:text-gray-100">{ev.student?.name || `Evaluation #${ev.id}`}</p>
-                    <p className="text-xs text-gray-400">{ev.hteName || "N/A"} · {new Date(ev.createdAt).toLocaleDateString()}</p>
+      <div className="space-y-3">
+        {(!activeEvals || activeEvals.length === 0) ? (
+          <Card className="border-0 shadow-sm"><CardContent className="py-12 text-center text-gray-400">
+            <ClipboardList className="w-10 h-10 mx-auto mb-3" />
+            <p>No evaluations found</p>
+          </CardContent></Card>
+        ) : (
+          activeEvals.map((ev: any) => (
+            <Card key={ev.id} className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedEval(ev); setViewOpen(true) }}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <p className="font-semibold text-sm">
+                        {ev.student?.name || ev.evaluator?.name || `Evaluation #${ev.id}`}
+                      </p>
+                      <Badge className={`text-[10px] px-2 py-0.5 font-medium border ${
+                        ev.overallGrade ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-yellow-100 text-yellow-700 border-yellow-300"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${ev.overallGrade ? "bg-emerald-500" : "bg-yellow-500"} inline-block mr-1.5`} />
+                        {ev.overallGrade ? "Completed" : "Pending"}
+                      </Badge>
+                      {ev.hteName && <span className="text-xs text-gray-400">{ev.hteName}</span>}
+                    </div>
                     {ev.scores && ev.scores.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1.5 mb-2">
                         {ev.scores.slice(0, 5).map((s: any) => (
-                          <span key={s.id} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                          <span key={s.id} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                             {s.criteriaName}: {s.rating}
                           </span>
                         ))}
@@ -613,26 +570,26 @@ export default function EvaluationsPage() {
                       </div>
                     )}
                     {ev.overallGrade && (
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">Overall:</span>
-                        <span className="text-sm font-bold text-[#1A1A2E] dark:text-gray-100">{ev.overallGrade}</span>
+                        <span className="text-sm font-bold text-[#1A1A2E]">{ev.overallGrade}</span>
                         <span className={`text-[10px] font-medium ${getRatingInfo(Number(ev.overallGrade)).color}`}>
                           ({getRatingInfo(Number(ev.overallGrade)).desc})
                         </span>
                       </div>
                     )}
                     {ev.aiSummary && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-600">
                         <Sparkles className="w-3 h-3" /> AI Summary Available
                       </div>
                     )}
                   </div>
+                  <ChevronRight className="w-5 h-5 text-gray-300" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-300" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* ── View Dialog ── */}
@@ -647,7 +604,7 @@ export default function EvaluationsPage() {
             </DialogHeader>
             {selectedEval && (
               <div className="space-y-5">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase">Student</p>
                     <p className="text-sm font-semibold">{selectedEval.student?.name || "N/A"}</p>
@@ -668,7 +625,7 @@ export default function EvaluationsPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase">Overall Grade</p>
-                    <p className="text-lg font-bold text-[#1A1A2E] dark:text-gray-100">{selectedEval.overallGrade || "N/A"}</p>
+                    <p className="text-lg font-bold text-[#1A1A2E]">{selectedEval.overallGrade || "N/A"}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase">Rating</p>
@@ -680,12 +637,12 @@ export default function EvaluationsPage() {
 
                 {/* AI Summary */}
                 {selectedEval.aiSummary && (
-                  <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-emerald-50 dark:from-purple-900/20 dark:to-emerald-900/20 border border-purple-200 dark:border-purple-800">
+                  <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-emerald-50 border border-purple-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Sparkles className="w-4 h-4 text-purple-600" />
-                      <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">AI Summary</span>
+                      <span className="text-xs font-semibold text-purple-700">AI Summary</span>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{selectedEval.aiSummary}</p>
+                    <p className="text-sm text-gray-700">{selectedEval.aiSummary}</p>
                   </div>
                 )}
 
@@ -709,10 +666,10 @@ export default function EvaluationsPage() {
                     <Label className="text-[10px] text-gray-500 uppercase font-semibold">Scores</Label>
                     <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {selectedEval.scores.map((s: any) => (
-                        <div key={s.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 border border-gray-100 dark:border-gray-700">
+                        <div key={s.id} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
                           <p className="text-[10px] text-gray-500 truncate">{s.criteriaName}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-sm font-bold text-[#1A1A2E] dark:text-gray-100">{s.rating}</span>
+                            <span className="text-sm font-bold text-[#1A1A2E]">{s.rating}</span>
                             <span className={`text-[10px] ${getRatingInfo(s.rating).color}`}>{getRatingInfo(s.rating).desc}</span>
                           </div>
                         </div>
@@ -725,25 +682,24 @@ export default function EvaluationsPage() {
                 {selectedEval.comments && (
                   <div>
                     <Label className="text-[10px] text-gray-500 uppercase font-semibold">Comments</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
                       {selectedEval.comments.replace(/\[COORDINATOR_[^\]]+\]/g, "").trim()}
                     </div>
                   </div>
                 )}
 
-                {/* Print & Export Buttons */}
-                <div className="flex gap-2">
-                  <Button onClick={() => handleOfficialPrint(selectedEval)} variant="outline" size="sm">
-                    <Printer className="w-4 h-4 mr-1.5" /> Print Official Form
-                  </Button>
-                  <Button onClick={() => exportOfficialPDF(selectedEval)} variant="outline" size="sm">
-                    <FileText className="w-4 h-4 mr-1.5" /> Export PDF
-                  </Button>
-                </div>
+                {/* Print Official Form Button */}
+                {(isSupervisor || isCoordinator) && selectedEval.overallGrade && (
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleOfficialPrint(selectedEval)} variant="outline" size="sm">
+                      <Printer className="w-4 h-4 mr-1.5" /> Print Official Form
+                    </Button>
+                  </div>
+                )}
 
                 {/* Coordinator Actions */}
                 {isCoordinator && (
-                  <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="space-y-3 pt-2 border-t border-gray-200">
                     <div>
                       <Label className="text-sm font-semibold">Coordinator Remarks</Label>
                       <Textarea value={coordinatorRemarks} onChange={e => setCoordinatorRemarks(e.target.value)} rows={2} placeholder="Add remarks..." className="mt-1" />
@@ -761,12 +717,12 @@ export default function EvaluationsPage() {
 
                 {/* Coordinator status markers */}
                 {selectedEval.comments?.includes("[COORDINATOR_STATUS: APPROVED]") && (
-                  <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-700 flex items-center gap-2">
                     <CheckCheck className="w-4 h-4" /> Approved by Coordinator
                   </div>
                 )}
                 {selectedEval.comments?.includes("[COORDINATOR_STATUS: RETURNED]") && (
-                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" /> Returned by Coordinator
                   </div>
                 )}
