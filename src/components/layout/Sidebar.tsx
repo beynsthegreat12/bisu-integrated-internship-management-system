@@ -41,6 +41,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Pull-Out Monitor', icon: AlertTriangle, path: '/coordinator/pullouts' },
     { label: 'Requirements', icon: ClipboardList, path: '/coordinator/requirements' },
     { label: 'Profile', icon: User, path: '/coordinator/profile' },
+    { label: 'Settings', icon: Settings, path: '/coordinator/settings' },
   ],
   supervisor: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/supervisor/dashboard' },
@@ -55,6 +56,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'Evaluations', icon: ClipboardList, path: '/sipp/evaluations' },
     { label: 'Site Visits', icon: Calendar, path: '/sipp/visits' },
     { label: 'Profile', icon: User, path: '/sipp/profile' },
+    { label: 'Settings', icon: Settings, path: '/sipp/settings' },
   ],
   admin: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/coordinator/dashboard' },
@@ -67,6 +69,7 @@ const menuConfig: Record<string, Array<{ label: string; icon: React.ElementType;
     { label: 'HTE Partners', icon: Building2, path: '/coordinator/htes' },
     { label: 'Users', icon: Settings, path: '/coordinator/users' },
     { label: 'Profile', icon: User, path: '/coordinator/profile' },
+    { label: 'Settings', icon: Settings, path: '/coordinator/settings' },
   ],
 }
 

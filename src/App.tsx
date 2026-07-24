@@ -118,6 +118,7 @@ export default function App() {
               <Route path="pullouts" element={<PullOutMonitoring />} />
               <Route path="requirements" element={<RequirementsPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </Suspense>
         </ProtectedRoute>
