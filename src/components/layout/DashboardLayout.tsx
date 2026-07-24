@@ -7,7 +7,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7B1F3A]" />
       </div>
     )
@@ -16,11 +16,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA]">
+    <div className="flex h-screen bg-[#F8F9FA] dark:bg-gray-900 overflow-hidden">
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header user={user} />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
